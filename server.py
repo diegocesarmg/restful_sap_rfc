@@ -12,6 +12,12 @@ class handler(BaseHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-type','text/html')
+        self.end_headers()
+        self.wfile.write(bytes("Hello World", "utf8"))
+
     def do_POST(self):
         # Basic auth
         if self.headers['Authorization'] != 'Basic ' + os.environ['AUTH_KEY']:
@@ -33,16 +39,20 @@ class handler(BaseHTTPRequestHandler):
 
         try:
             response = dict2xml(erp_helper.rfc_execute(rfc_data["rfc_name"], rfc_data["rfc_params"]))
+            self.send_response(200)
+            self.send_header('Content-type','application/xml')
+            self.end_headers()
+            self.wfile.write(bytes(response, "utf8"))
 
-            self.send_header("Content-type", 'application/xml') # or whatever you expect
-            # self.send_header("Content-Encoding", 'gzip')
-            # don't forget to import zlib
-            gzip_compress = zlib.compressobj(9, zlib.DEFLATED, zlib.MAX_WBITS | 16)
-            # response is the string where your response is
-            content = gzip_compress.compress(bytes(str(response), "utf8")) + gzip_compress.flush()
-            compressed_content_length = len(content)
-            self.send_header("Content-Length", compressed_content_length)
-            self.wfile.write(content)
+            # self.send_header("Content-type", 'application/xml') # or whatever you expect
+            # # self.send_header("Content-Encoding", 'gzip')
+            # # don't forget to import zlib
+            # gzip_compress = zlib.compressobj(9, zlib.DEFLATED, zlib.MAX_WBITS | 16)
+            # # response is the string where your response is
+            # content = gzip_compress.compress(bytes(str(response), "utf8")) + gzip_compress.flush()
+            # compressed_content_length = len(content)
+            # self.send_header("Content-Length", compressed_content_length)
+            # self.wfile.write(content)
             
 
         except Exception as e:
@@ -70,5 +80,7 @@ class handler(BaseHTTPRequestHandler):
 
         return d
 
+
 with HTTPServer(('', 8000), handler) as server:
+    print('Starting server at http://localhost:8000')
     server.serve_forever()
